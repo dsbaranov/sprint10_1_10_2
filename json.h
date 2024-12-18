@@ -34,6 +34,12 @@ class ParsingError : public std::runtime_error {
   using runtime_error::runtime_error;
 };
 
+using Number = std::variant<int, double>;
+Number LoadNumber(std::istream& input);
+// Считывает содержимое строкового литерала JSON-документа
+// Функцию следует использовать после считывания открывающего символа ":
+std::string LoadString(std::istream& input);
+
 class Node {
  public:
   const Value& GetValue() const { return value_; }
@@ -44,7 +50,7 @@ class Node {
   explicit Node(int value);
   explicit Node(std::string value);
   explicit Node(double value);
-  explicit Node(std::nullptr_t) : value_(nullptr) {}
+  explicit Node(std::nullptr_t);
 
   int AsInt() const;
   bool AsBool() const;
