@@ -5,35 +5,45 @@ using namespace std;
 namespace json
 {
 
-  std::string FormatString(std::string_view str)
-  {
-    std::
-        string result;
-    result.push_back('\"');
-    for (char c : str)
-    {
-      if (c == '\n' || c == '\t' || c == '\r' || c == '\"' || c == '\\')
-      {
-        result.push_back('\\');
-      }
-      result.push_back(c);
-    }
-    result.push_back('\"');
-
-    return result;
-  }
-
   // ValuePrinter
 
   void ValuePrinter::operator()(std::nullptr_t) { os_ << "null"s; }
-  void ValuePrinter::operator()(Array) { os_ << ""s; }
-  void ValuePrinter::operator()(Dict) { os_ << ""s; }
-  void ValuePrinter::operator()(bool value) { os_ << value ? "true"s : "false"s; }
+  void ValuePrinter::operator()(Array) { os_ << "array"s; }
+  void ValuePrinter::operator()(Dict) { os_ << "dict"s; }
+  void ValuePrinter::operator()(bool value) { os_ << (value ? "true"s : "false"s); }
   void ValuePrinter::operator()(int value) { os_ << value; }
   void ValuePrinter::operator()(double value) { os_ << value; }
   void ValuePrinter::operator()(std::string value)
   {
-    os_ << FormatString(value);
+    os_ << "\""sv;
+    for (const char c : value)
+    {
+      if (c == '\n')
+      {
+        os_ << "\\n"s;
+      }
+      else if (c == '\r')
+      {
+        os_ << "\\r"s;
+      }
+      else if (c == '\"')
+      {
+        os_ << "\\\""s;
+      }
+      else if (c == '\t')
+      {
+        os_ << "\\t"s;
+      }
+      else if (c == '\\')
+      {
+        os_ << "\\\\"s;
+      }
+      else
+      {
+        os_ << c;
+      }
+    }
+    os_ << "\""sv;
   }
 
   // Node
@@ -258,14 +268,21 @@ namespace json
     {
       return LoadDict(input);
     }
-    else if (c == '"')
+    else if (c == '"' || c == '\n' || c == '\t' || c == '\\' || c == 'r')
     {
-      input.putback(c);
       return Node(LoadString(input));
     }
     else if (c == 'n')
     {
       return Node();
+    }
+    else if (c == 't')
+    {
+      return Node(true);
+    }
+    else if (c == 'f')
+    {
+      return Node(false);
     }
     else
     {
@@ -282,7 +299,10 @@ namespace json
     }
   }
 
-  Node::Node(Array array) : value_(move(array)) {}
+  Node::Node(Array array)
+  {
+    value_ = std::move(array);
+  }
 
   Node::Node(Dict map) : value_(move(map)) {}
 
@@ -293,6 +313,8 @@ namespace json
   Node::Node(double value) : value_(move(value)) {}
 
   Node::Node(std::nullptr_t) : value_(nullptr) {}
+
+  Node::Node(bool value) : value_(value) {}
 
   int Node::AsInt() const { return ExtractValue<int>(); }
   bool Node::AsBool() const { return ExtractValue<bool>(); }

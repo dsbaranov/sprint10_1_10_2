@@ -28,33 +28,33 @@ namespace
         return out.str();
     }
 
-    // void MustFailToLoad(const std::string &s)
-    // {
-    //     try
-    //     {
-    //         LoadJSON(s);
-    //         std::cerr << "ParsingError exception is expected on '"sv << s << "'"sv
-    //                   << std::endl;
-    //         assert(false);
-    //     }
-    //     catch (const json::ParsingError &)
-    //     {
-    //         // ok
-    //     }
-    //     catch (const std::exception &e)
-    //     {
-    //         std::cerr << "exception thrown: "sv << e.what() << std::endl;
-    //         assert(false);
-    //     }
-    //     catch (...)
-    //     {
-    //         std::cerr << "Unexpected error"sv << std::endl;
-    //         assert(false);
-    //     }
-    // }
+    [[maybe_unused]] void MustFailToLoad(const std::string &s)
+    {
+        try
+        {
+            LoadJSON(s);
+            std::cerr << "ParsingError exception is expected on '"sv << s << "'"sv
+                      << std::endl;
+            assert(false);
+        }
+        catch (const json::ParsingError &)
+        {
+            // ok
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "exception thrown: "sv << e.what() << std::endl;
+            assert(false);
+        }
+        catch (...)
+        {
+            std::cerr << "Unexpected error"sv << std::endl;
+            assert(false);
+        }
+    }
 
     template <typename Fn>
-    void MustThrowLogicError(Fn fn)
+    [[maybe_unused]] void MustThrowLogicError(Fn fn)
     {
         try
         {
@@ -78,7 +78,7 @@ namespace
         }
     }
 
-    void TestNull()
+    [[maybe_unused]] void TestNull()
     {
         Node null_node;
         assert(null_node.IsNull());
@@ -104,7 +104,7 @@ namespace
         assert(LoadJSON(" \t\r\n\n\r null \t\r\n\n\r "s).GetRoot() == null_node);
     }
 
-    void TestNumbers()
+    [[maybe_unused]] void TestNumbers()
     {
         const Node int_node{42};
         assert(int_node.IsInt());
@@ -144,7 +144,7 @@ namespace
                Node{0.0});
     }
 
-    void TestStrings()
+    [[maybe_unused]] void TestStrings()
     {
         Node str_node{"Hello, \"everybody\""s};
         assert(str_node.IsString());
@@ -153,76 +153,73 @@ namespace
         assert(!str_node.IsInt());
         assert(!str_node.IsDouble());
         auto print = Print(str_node);
-        std::cout << print << "\"Hello, \\\"everybody\\\"\""s << std::endl;
         assert(print == "\"Hello, \\\"everybody\\\"\""s);
 
-        auto clone_node = LoadJSON(Print(str_node)).GetRoot();
-        assert(clone_node == str_node);
+        assert(LoadJSON(Print(str_node)).GetRoot() == str_node);
         const std::string escape_chars = R"("\r\n\t\"\\")"s; // При чтении строкового литерала последовательности \r,\n,\t,\\,\"
         // преобразовываться в соответствующие символы.
         // При выводе эти символы должны экранироваться.
-        assert(Print(LoadJSON(escape_chars).GetRoot()) == "\"\\r\\n\\t\\\"\\\\\""s);
+        auto excape_chars_node = LoadJSON(escape_chars).GetRoot();
+        auto escape_chars_node_str = Print(excape_chars_node);
+        assert(escape_chars_node_str == "\"\\r\\n\\t\\\"\\\\\""s);
         // Пробелы, табуляции и символы перевода строки между токенами JSON файла игнорируются
         assert(LoadJSON("\t\r\n\n\r \"Hello\" \t\r\n\n\r ").GetRoot() ==
                Node{"Hello"s});
     }
 
-    //     void TestBool()
-    //     {
-    //         Node true_node{true};
-    //         assert(true_node.IsBool());
-    //         assert(true_node.AsBool());
+    [[maybe_unused]] void TestBool()
+    {
+        Node true_node{true};
+        assert(true_node.IsBool());
+        assert(true_node.AsBool());
 
-    //         Node false_node{false};
-    //         assert(false_node.IsBool());
-    //         assert(!false_node.AsBool());
+        Node false_node{false};
+        assert(false_node.IsBool());
+        assert(!false_node.AsBool());
 
-    //         assert(Print(true_node) == "true"s);
-    //         assert(Print(false_node) == "false"s);
+        assert(Print(true_node) == "true"s);
+        assert(Print(false_node) == "false"s);
 
-    //         assert(LoadJSON("true"s).GetRoot() == true_node);
-    //         assert(LoadJSON("false"s).GetRoot() == false_node);
-    //         assert(LoadJSON(" \t\r\n\n\r true \r\n"s).GetRoot() == true_node);
-    //         assert(LoadJSON(" \t\r\n\n\r false \t\r\n\n\r "s).GetRoot() == false_node);
-    //     }
+        assert(LoadJSON("true"s).GetRoot() == true_node);
+        assert(LoadJSON("false"s).GetRoot() == false_node);
+        assert(LoadJSON(" \t\r\n\n\r true \r\n"s).GetRoot() == true_node);
+        assert(LoadJSON(" \t\r\n\n\r false \t\r\n\n\r "s).GetRoot() == false_node);
+    }
 
-    //     void TestArray()
-    //     {
-    //         Node arr_node{Array{1, 1.23, "Hello"s}};
-    //         assert(arr_node.IsArray());
-    //         const Array &arr = arr_node.AsArray();
-    //         assert(arr.size() == 3);
-    //         assert(arr.at(0).AsInt() == 1);
+    void TestArray()
+    {
+        Node arr_node{Array{1, 1.23, "Hello"s}};
+        assert(arr_node.IsArray());
+        const Array &arr = arr_node.AsArray();
+        assert(arr.size() == 3);
+        assert(arr.at(0).AsInt() == 1);
 
-    //         assert(LoadJSON("[1,1.23,\"Hello\"]"s).GetRoot() == arr_node);
-    //         assert(LoadJSON(Print(arr_node)).GetRoot() == arr_node);
-    //         assert(LoadJSON(R"(  [ 1  ,  1.23,  "Hello"   ]   )"s).GetRoot() ==
-    //                arr_node);
-    //         // Пробелы, табуляции и символы перевода строки между токенами JSON файла игнорируются
-    //  assert(LoadJSON("[ 1 \r \n ,  \r\n\t 1.23, \n \n  \t\t  \"Hello\"
-    // \t \n  ] \n  "s).GetRoot()
-    //            == arr_node);
-    //     }
+        assert(LoadJSON("[1,1.23,\"Hello\"]"s).GetRoot() == arr_node);
+        assert(LoadJSON(Print(arr_node)).GetRoot() == arr_node);
+        assert(LoadJSON(R"(  [ 1  ,  1.23,  "Hello"   ]   )"s).GetRoot() == arr_node);
+        // Пробелы, табуляции и символы перевода строки между токенами JSON файла игнорируются
+        assert(LoadJSON("[ 1 \r \n ,  \r\n\t 1.23, \n \n  \t\t  \"Hello\" \t \n  ] \n  "s).GetRoot() == arr_node);
+    }
 
-    //     void TestMap()
-    //     {
-    //         Node dict_node{Dict{{"key1"s, "value1"s}, {"key2"s, 42}}};
-    //         assert(dict_node.IsMap());
-    //         const Dict &dict = dict_node.AsMap();
-    //         assert(dict.size() == 2);
-    //         assert(dict.at("key1"s).AsString() == "value1"s);
-    //         assert(dict.at("key2"s).AsInt() == 42);
+    // void TestMap()
+    // {
+    //     Node dict_node{Dict{{"key1"s, "value1"s}, {"key2"s, 42}}};
+    //     assert(dict_node.IsMap());
+    //     const Dict &dict = dict_node.AsMap();
+    //     assert(dict.size() == 2);
+    //     assert(dict.at("key1"s).AsString() == "value1"s);
+    //     assert(dict.at("key2"s).AsInt() == 42);
 
-    //         assert(LoadJSON("{ \"key1\": \"value1\", \"key2\": 42 }"s).GetRoot() ==
-    //                dict_node);
-    //         assert(LoadJSON(Print(dict_node)).GetRoot() == dict_node);
-    //         // Пробелы, табуляции и символы перевода строки между токенами JSON файла игнорируются
+    //     assert(LoadJSON("{ \"key1\": \"value1\", \"key2\": 42 }"s).GetRoot() ==
+    //            dict_node);
+    //     assert(LoadJSON(Print(dict_node)).GetRoot() == dict_node);
+    //     // Пробелы, табуляции и символы перевода строки между токенами JSON файла игнорируются
     //  assert( LoadJSON(
     //             "\t\r\n\n\r { \t\r\n\n\r \"key1\" \t\r\n\n\r: \t\r\n\n\r \"value1\"
     // \t\r\n\n\r , \t\r\n\n\r \"key2\" \t\r\n\n\r : \t\r\n\n\r 42 \t\r\n\n\r }
     // \t\r\n\n\r"s) .GetRoot()
     //         == dict_node);
-    //     }
+    // }
 
     //     void TestErrorHandling()
     //     {
@@ -288,8 +285,8 @@ int main()
     TestNull();
     TestNumbers();
     TestStrings();
-    // TestBool();
-    // TestArray();
+    TestBool();
+    TestArray();
     // TestMap();
     // TestErrorHandling();
     // Benchmark();

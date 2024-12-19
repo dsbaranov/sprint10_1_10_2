@@ -57,6 +57,7 @@ namespace json
     explicit Node(std::string value);
     explicit Node(double value);
     explicit Node(std::nullptr_t);
+    explicit Node(bool value);
 
     int AsInt() const;
     bool AsBool() const;
