@@ -229,7 +229,7 @@ void TestErrorHandling() {
   MustThrowLogicError([&array_node] { array_node.AsBool(); });
 }
 
-void Benchmark() {
+[[maybe_unused]] void Benchmark() {
   const auto start = std::chrono::steady_clock::now();
   Array arr;
   arr.reserve(1'000);
@@ -255,7 +255,6 @@ void Benchmark() {
       << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()
       << "ms"sv << std::endl;
 }
-
 }  // namespace
 
 int main() {
@@ -266,5 +265,22 @@ int main() {
   TestArray();
   TestMap();
   TestErrorHandling();
+  //   {
+  //     Array arr;
+  //     arr.reserve(1'000);
+  //     for (int i = 0; i < 1'000; ++i) {
+  //       arr.emplace_back(Dict{
+  //           {"int"s, 42},
+  //           {"double"s, 42.1},
+  //           {"null"s, nullptr},
+  //           {"string"s, "hello"s},
+  //           {"array"s, Array{1, 2, 3}},
+  //           {"bool"s, true},
+  //           {"map"s, Dict{{"key"s, "value"s}}},
+  //       });
+  //     }
+  //     Document _doc{arr};
+  //     json::Print(_doc, std::cout);
+  //   }
   Benchmark();
 }
